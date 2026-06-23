@@ -1,0 +1,15 @@
+<aside class="panel">
+  <div class="panel-header">
+    <h2>Via Velo</h2>
+  </div>
+  <app-gpx-import
+    [errorMessage]="errorMessage()"
+    (fileSelected)="onFileSelected($event)"
+  ></app-gpx-import>
+  <app-route-info [route]="route()"></app-route-info>
+</aside>
+
+<div class="map-area">
+  <app-map [route]="route()"></app-map>
+  <app-elevation-profile [trackPoints]="route()?.trackPoints ?? []"></app-elevation-profile>
+</div>
