@@ -12,22 +12,41 @@
   </div>
   <ul class="stage-list">
     @for (stage of stages(); track stage.index) {
-      <li
-        class="stage-row"
-        [class.selected]="stage.index === selectedIndex()"
-        [style.border-left-color]="stageColor(stage.index)"
-        (click)="select(stage.index)"
-      >
-        <span class="stage-color" [style.background-color]="stageColor(stage.index)"></span>
-        <div class="stage-body">
-          <span class="stage-name">Etappe {{ stage.index + 1 }}</span>
-          <div class="stage-metrics">
-            <span class="distance">{{ stage.distanceKm.toFixed(1) }} km</span>
-            <span class="gain">↑ {{ stage.elevationGainM | number: '1.0-0' }} m</span>
-            <span class="loss">↓ {{ stage.elevationLossM | number: '1.0-0' }} m</span>
-            <span class="duration">{{ stage.durationMinutes | duration }}</span>
+      <li class="stage-item" [style.border-left-color]="stageColor(stage.index)">
+        <div
+          class="stage-row"
+          [class.selected]="stage.index === selectedIndex()"
+          (click)="select(stage.index)"
+        >
+          <span class="stage-color" [style.background-color]="stageColor(stage.index)"></span>
+          <div class="stage-body">
+            <span class="stage-name">Etappe {{ stage.index + 1 }}</span>
+            <div class="stage-metrics">
+              <span class="distance">{{ stage.distanceKm.toFixed(1) }} km</span>
+              <span class="gain">↑ {{ stage.elevationGainM | number: '1.0-0' }} m</span>
+              <span class="loss">↓ {{ stage.elevationLossM | number: '1.0-0' }} m</span>
+              <span class="duration">{{ stage.durationMinutes | duration }}</span>
+            </div>
           </div>
+          @if (isIntermediate(stage.index)) {
+            <button
+              type="button"
+              class="stage-chevron"
+              [class.expanded]="expandedIndex() === stage.index"
+              [attr.aria-expanded]="expandedIndex() === stage.index"
+              aria-label="Campingplätze ein-/ausklappen"
+              (click)="toggleExpand(stage.index, $event)"
+            >
+              ›
+            </button>
+          }
         </div>
+        @if (expandedIndex() === stage.index && campStopFor(stage.index); as stop) {
+          <app-campground-section
+            [stop]="stop"
+            (retry)="onRetry($event)"
+          ></app-campground-section>
+        }
       </li>
     }
   </ul>

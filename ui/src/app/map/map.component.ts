@@ -25,7 +25,7 @@ export class MapComponent implements OnDestroy {
   readonly stages = input<Stage[]>([]);
   readonly selectedStageIndex = input<number | null>(null);
   readonly campStops = input<CampStop[]>([]);
-  readonly selectedCampStopIndex = input<number | null>(null);
+  readonly expandedStageIndex = input<number | null>(null);
   readonly stageSelected = output<number>();
 
   private readonly mapContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
@@ -46,7 +46,7 @@ export class MapComponent implements OnDestroy {
       this.stages();
       this.selectedStageIndex();
       this.campStops();
-      this.selectedCampStopIndex();
+      this.expandedStageIndex();
       if (this.map) this.render();
     });
 
@@ -55,7 +55,7 @@ export class MapComponent implements OnDestroy {
     effect(() => {
       this.route();
       this.selectedStageIndex();
-      this.selectedCampStopIndex();
+      this.expandedStageIndex();
       if (this.map) this.updateZoom();
     });
   }
@@ -123,9 +123,9 @@ export class MapComponent implements OnDestroy {
       fillOpacity: 1,
     }).addTo(this.routeLayer);
 
-    const focusedCampStop = this.selectedCampStopIndex();
+    const expanded = this.expandedStageIndex();
     for (const stop of this.campStops()) {
-      const dim = focusedCampStop !== null && stop.stageIndex !== focusedCampStop;
+      const dim = expanded !== null && stop.stageIndex !== expanded;
       this.addCampStop(stop, dim);
     }
   }
@@ -193,29 +193,36 @@ export class MapComponent implements OnDestroy {
 
     const points = route.trackPoints;
     const selected = this.selectedStageIndex();
-    const focusedCampStop = this.selectedCampStopIndex();
+    const expanded = this.expandedStageIndex();
     // Read the stage plan without tracking it, so reflows do not trigger a zoom.
     const stage = selected !== null ? untracked(() => this.stages())[selected] : undefined;
     // Read the camp stops without tracking them, so a fresh result does not re-zoom.
+    // The expanded stage's overnight location, when known, extends the focus.
     const campStop =
-      focusedCampStop !== null
-        ? untracked(() => this.campStops()).find((s) => s.stageIndex === focusedCampStop)
+      expanded !== null
+        ? untracked(() => this.campStops()).find((s) => s.stageIndex === expanded)
         : undefined;
 
-    if (campStop) {
-      const bounds = L.circle([campStop.lat, campStop.lng], {
-        radius: campStop.radiusKm * 1000,
-      }).getBounds();
-      this.map.fitBounds(bounds, { padding: [32, 32] });
-    } else if (stage) {
-      const segment = points
-        .slice(stage.startPointIndex, stage.endPointIndex + 1)
-        .map((pt) => L.latLng(pt.lat, pt.lng));
-      this.map.fitBounds(L.latLngBounds(segment), { padding: [32, 32] });
-    } else {
+    if (!stage) {
+      // Nothing selected → whole-route overview.
       const allLatLngs = points.map((pt) => L.latLng(pt.lat, pt.lng));
       this.map.fitBounds(L.latLngBounds(allLatLngs), { padding: [32, 32] });
+      return;
     }
+
+    const segment = points
+      .slice(stage.startPointIndex, stage.endPointIndex + 1)
+      .map((pt) => L.latLng(pt.lat, pt.lng));
+    const bounds = L.latLngBounds(segment);
+
+    // Expanded stage with a known overnight location → fit segment + search circle.
+    if (campStop) {
+      bounds.extend(
+        L.circle([campStop.lat, campStop.lng], { radius: campStop.radiusKm * 1000 }).getBounds(),
+      );
+    }
+
+    this.map.fitBounds(bounds, { padding: [32, 32] });
   }
 
   private addStageStartMarker(

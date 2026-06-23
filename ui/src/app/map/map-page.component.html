@@ -15,17 +15,13 @@
   <div class="stage-list-region">
     <app-stage-list
       [stages]="stages()"
+      [campStops]="campStopViews()"
       [(selectedIndex)]="selectedStageIndex"
+      [expandedIndex]="expandedStageIndex()"
+      (expandedIndexChange)="onExpandedChanged($event)"
+      (retry)="loadCampgroundsForStop($event)"
     ></app-stage-list>
   </div>
-  @if (stages().length >= 2) {
-    <app-camping-list
-      [stops]="campStopViews()"
-      [selectedStageIndex]="selectedCampStopIndex()"
-      (search)="loadCampgroundsForStop($event)"
-      (stopFocused)="onCampStopFocused($event)"
-    ></app-camping-list>
-  }
 </aside>
 
 <div class="map-area">
@@ -34,8 +30,12 @@
     [stages]="stages()"
     [selectedStageIndex]="selectedStageIndex()"
     [campStops]="campStopsList()"
-    [selectedCampStopIndex]="selectedCampStopIndex()"
+    [expandedStageIndex]="expandedStageIndex()"
     (stageSelected)="selectedStageIndex.set($event)"
   ></app-map>
-  <app-elevation-profile [trackPoints]="route()?.trackPoints ?? []"></app-elevation-profile>
+  <app-elevation-profile
+    [trackPoints]="route()?.trackPoints ?? []"
+    [stages]="stages()"
+    [selectedStageIndex]="selectedStageIndex()"
+  ></app-elevation-profile>
 </div>

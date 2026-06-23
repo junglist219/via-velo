@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MapComponent } from './map.component';
 import { GpxImportComponent } from './gpx-import.component';
 import { RouteInfoComponent } from './route-info.component';
@@ -6,7 +6,6 @@ import { ElevationProfileComponent } from './elevation-profile.component';
 import { StageListComponent } from './stage-list.component';
 import { StagePlannerComponent } from './stage-planner.component';
 import { StepIndicatorComponent } from './step-indicator.component';
-import { CampingListComponent } from './camping-list.component';
 import { GpxParserService } from './gpx-parser.service';
 import { StagePlannerService } from './stage-planner.service';
 import { CampgroundService } from './campground.service';
@@ -22,7 +21,6 @@ import type { CampStop, CampStopView, ParsedRoute } from './models';
     StageListComponent,
     StagePlannerComponent,
     StepIndicatorComponent,
-    CampingListComponent,
   ],
   templateUrl: './map-page.component.html',
   styleUrl: './map-page.component.scss',
@@ -39,15 +37,15 @@ export class MapPageComponent {
   numberOfStages = signal(1);
   selectedStageIndex = signal<number | null>(null);
 
+  // Accordion source of truth: the one stage whose campground section is open, or
+  // null when all are collapsed. Expansion and stage selection are coupled.
+  expandedStageIndex = signal<number | null>(null);
+
   // Per-stopover campground state, keyed by the stop's stageIndex so each stop's
   // result, loading flag, and error stay independent.
   campStops = signal<Map<number, CampStop>>(new Map());
   campLoadingStops = signal<Set<number>>(new Set());
   campErrors = signal<Map<number, string>>(new Map());
-
-  // Panel-driven focus on a single overnight stop. Mutually exclusive with the
-  // stage selection — only one focus is ever active.
-  selectedCampStopIndex = signal<number | null>(null);
 
   stages = computed(() => {
     const r = this.route();
@@ -95,29 +93,47 @@ export class MapPageComponent {
   );
 
   constructor() {
-    // Reflowing the split always returns to the overview; clear any selection and
-    // wipe all campground results so stale overnight options are never shown.
+    // Reflowing the split always returns to the overview; collapse the accordion,
+    // clear any selection and wipe all campground results so stale overnight
+    // options are never shown.
     effect(() => {
       this.numberOfStages();
       this.selectedStageIndex.set(null);
-      this.selectedCampStopIndex.set(null);
+      this.expandedStageIndex.set(null);
       this.campStops.set(new Map());
       this.campLoadingStops.set(new Set());
       this.campErrors.set(new Map());
     });
 
-    // Selecting a stage clears any focused camp stop — only one focus is active.
+    // Selecting a stage other than the expanded one collapses the open section —
+    // the open section always belongs to the currently selected stage.
     effect(() => {
-      if (this.selectedStageIndex() !== null) {
-        this.selectedCampStopIndex.set(null);
+      const selected = this.selectedStageIndex();
+      if (untracked(() => this.expandedStageIndex()) !== selected) {
+        this.expandedStageIndex.set(null);
       }
+    });
+
+    // Auto-search on first expand: expanding a stage with no cached result and no
+    // in-flight request kicks off the campground search. Cached results
+    // short-circuit, so re-expanding a completed stage issues no new request.
+    effect(() => {
+      const index = this.expandedStageIndex();
+      if (index === null) return;
+      const hasResult = untracked(() => this.campStops()).has(index);
+      const inFlight = untracked(() => this.campLoadingStops()).has(index);
+      if (hasResult || inFlight) return;
+      void untracked(() => this.loadCampgroundsForStop(index));
     });
   }
 
-  // Focusing a camp stop clears any selected stage (the inverse exclusion).
-  onCampStopFocused(stageIndex: number): void {
-    this.selectedStageIndex.set(null);
-    this.selectedCampStopIndex.set(stageIndex);
+  // Expanding a stage selects it; the model write from the stage list sets
+  // expandedStageIndex, and this keeps selection in lock-step.
+  onExpandedChanged(index: number | null): void {
+    this.expandedStageIndex.set(index);
+    if (index !== null) {
+      this.selectedStageIndex.set(index);
+    }
   }
 
   async loadCampgroundsForStop(stageIndex: number): Promise<void> {

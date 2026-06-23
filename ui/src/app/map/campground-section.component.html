@@ -1,0 +1,53 @@
+<div class="camp-section">
+  @if (stop().loading) {
+    <div class="camp-loading">Suche läuft…</div>
+  }
+
+  @if (stop().result; as result) {
+    <div class="camp-metrics">
+      <span class="count">{{ result.campgrounds.length }} Campingplätze</span>
+      <span class="radius">im Umkreis von {{ result.radiusKm }} km</span>
+    </div>
+
+    @if (result.campgrounds.length === 0) {
+      <div class="camp-warning">
+        Im Umkreis von {{ result.radiusKm }} km wurde kein Campingplatz gefunden.
+      </div>
+    } @else {
+      @if (result.expanded) {
+        <div class="camp-warning">
+          Der nächste Campingplatz liegt erst {{ result.radiusKm }} km entfernt.
+        </div>
+      }
+      <ul class="camp-entries">
+        @for (camp of result.campgrounds; track camp.id) {
+          <li class="camp-entry">
+            <span class="camp-entry__name">{{ camp.name }}</span>
+            @if (camp.address) {
+              <span class="camp-entry__address">{{ camp.address }}</span>
+            }
+            <span class="camp-entry__links">
+              @if (camp.website) {
+                <a
+                  class="camp-entry__link"
+                  [href]="camp.website"
+                  target="_blank"
+                  rel="noopener"
+                  >Webseite</a
+                >
+              }
+              <a class="camp-entry__link" [href]="mapsUrl(camp)" target="_blank" rel="noopener"
+                >Google Maps</a
+              >
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  }
+
+  @if (stop().error) {
+    <div class="camp-error">{{ stop().error }}</div>
+    <button type="button" class="camp-retry" (click)="onRetry()">Erneut versuchen</button>
+  }
+</div>
