@@ -8,7 +8,7 @@ const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
 // Search radii (km) tried in ascending order. The search stops at the first
 // radius that yields at least one result; if the widest radius yields nothing
 // it settles there with an empty, warned result.
-const RADIUS_STEPS_KM = [5, 10, 20, 30];
+const RADIUS_STEPS_KM = [10, 20, 30];
 
 // A result is considered "expanded" (meaningfully widened) once the settled
 // radius reaches this threshold — used to drive the panel's far-away / not-found

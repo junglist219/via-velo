@@ -17,8 +17,7 @@
       [stages]="stages()"
       [campStops]="campStopViews()"
       [(selectedIndex)]="selectedStageIndex"
-      [expandedIndex]="expandedStageIndex()"
-      (expandedIndexChange)="onExpandedChanged($event)"
+      [(expandedIndex)]="expandedStageIndex"
       (retry)="loadCampgroundsForStop($event)"
     ></app-stage-list>
   </div>

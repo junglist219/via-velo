@@ -24,12 +24,12 @@ describe('CampgroundService', () => {
     httpMock.verify();
   });
 
-  it('settles at 5 km with a single request when a campground is within 5 km', async () => {
+  it('settles at 10 km with a single request when a campground is within 10 km', async () => {
     const promise = service.findNear(46.5, 8.0);
 
     const req = httpMock.expectOne(OVERPASS_ENDPOINT);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toContain('around:5000');
+    expect(req.request.body).toContain('around:10000');
     req.flush({
       elements: [
         { id: 1, lat: 46.51, lon: 8.01, tags: { name: 'Camping Alpenblick' } },
@@ -37,7 +37,7 @@ describe('CampgroundService', () => {
     });
 
     const result = await promise;
-    expect(result.radiusKm).toBe(5);
+    expect(result.radiusKm).toBe(10);
     expect(result.expanded).toBe(false);
     expect(result.campgrounds.length).toBe(1);
     expect(result.campgrounds[0].name).toBe('Camping Alpenblick');
@@ -49,11 +49,6 @@ describe('CampgroundService', () => {
 
   it('escalates to 20 km when nothing is found nearer and flags it expanded', async () => {
     const promise = service.findNear(46.5, 8.0);
-
-    const req5 = httpMock.expectOne(OVERPASS_ENDPOINT);
-    expect(req5.request.body).toContain('around:5000');
-    req5.flush({ elements: [] });
-    await tick();
 
     const req10 = httpMock.expectOne(OVERPASS_ENDPOINT);
     expect(req10.request.body).toContain('around:10000');
@@ -75,7 +70,7 @@ describe('CampgroundService', () => {
   it('settles at 30 km with an empty, expanded result when nothing is found anywhere', async () => {
     const promise = service.findNear(46.5, 8.0);
 
-    for (const r of [5000, 10000, 20000, 30000]) {
+    for (const r of [10000, 20000, 30000]) {
       const req = httpMock.expectOne(OVERPASS_ENDPOINT);
       expect(req.request.body).toContain(`around:${r}`);
       req.flush({ elements: [] });

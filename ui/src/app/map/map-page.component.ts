@@ -114,6 +114,17 @@ export class MapPageComponent {
       }
     });
 
+    // Expanding a stage selects it, keeping selection in lock-step with the open
+    // section. Collapsing (expanded → null) deliberately leaves the selection
+    // intact, so a loaded stage stays freely collapsible and re-expandable via
+    // its chevron.
+    effect(() => {
+      const expanded = this.expandedStageIndex();
+      if (expanded !== null) {
+        this.selectedStageIndex.set(expanded);
+      }
+    });
+
     // Auto-search on first expand: expanding a stage with no cached result and no
     // in-flight request kicks off the campground search. Cached results
     // short-circuit, so re-expanding a completed stage issues no new request.
@@ -125,15 +136,6 @@ export class MapPageComponent {
       if (hasResult || inFlight) return;
       void untracked(() => this.loadCampgroundsForStop(index));
     });
-  }
-
-  // Expanding a stage selects it; the model write from the stage list sets
-  // expandedStageIndex, and this keeps selection in lock-step.
-  onExpandedChanged(index: number | null): void {
-    this.expandedStageIndex.set(index);
-    if (index !== null) {
-      this.selectedStageIndex.set(index);
-    }
   }
 
   async loadCampgroundsForStop(stageIndex: number): Promise<void> {
