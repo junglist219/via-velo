@@ -1,0 +1,11 @@
+<ol class="step-indicator">
+  @for (step of steps; track step.number; let last = $last) {
+    <li class="step" [class.active]="step.number <= currentStep()">
+      <span class="step-number">{{ step.number }}</span>
+      <span class="step-label">{{ step.label }}</span>
+    </li>
+    @if (!last) {
+      <li class="step-separator" aria-hidden="true">·</li>
+    }
+  }
+</ol>

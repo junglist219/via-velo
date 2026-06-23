@@ -2,14 +2,30 @@
   <div class="panel-header">
     <h2>Via Velo</h2>
   </div>
+  <app-step-indicator [currentStep]="currentStep()"></app-step-indicator>
   <app-gpx-import
     [errorMessage]="errorMessage()"
     (fileSelected)="onFileSelected($event)"
   ></app-gpx-import>
   <app-route-info [route]="route()"></app-route-info>
+  <app-stage-planner
+    [route]="route()"
+    [(numberOfStages)]="numberOfStages"
+  ></app-stage-planner>
+  <div class="stage-list-region">
+    <app-stage-list
+      [stages]="stages()"
+      [(selectedIndex)]="selectedStageIndex"
+    ></app-stage-list>
+  </div>
 </aside>
 
 <div class="map-area">
-  <app-map [route]="route()"></app-map>
+  <app-map
+    [route]="route()"
+    [stages]="stages()"
+    [selectedStageIndex]="selectedStageIndex()"
+    (stageSelected)="selectedStageIndex.set($event)"
+  ></app-map>
   <app-elevation-profile [trackPoints]="route()?.trackPoints ?? []"></app-elevation-profile>
 </div>

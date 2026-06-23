@@ -1,0 +1,43 @@
+@if (route()) {
+  <div class="stage-planner">
+    <div class="control">
+      <label for="stage-length">Etappenlänge</label>
+      <div class="length-row">
+        <input
+          id="stage-length"
+          type="range"
+          [min]="minKm"
+          [max]="maxKm"
+          step="5"
+          [value]="displayedKm()"
+          (input)="onKmInput($any($event.target).value)"
+        />
+        <div class="km-field">
+          <input
+            type="number"
+            [min]="minKm"
+            [max]="maxKm"
+            step="5"
+            [value]="displayedKm()"
+            (change)="onKmInput($any($event.target).value)"
+          />
+          <span class="unit">km</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="control days-control">
+      <label for="stage-days">Tage</label>
+      <input
+        id="stage-days"
+        type="number"
+        min="1"
+        [max]="maxStages()"
+        [value]="numberOfStages()"
+        (change)="onDaysInput($any($event.target).value)"
+      />
+    </div>
+
+    <p class="suggestion">Vorschlag: {{ suggestedDays() }} Tage</p>
+  </div>
+}

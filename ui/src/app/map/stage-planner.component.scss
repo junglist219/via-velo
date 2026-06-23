@@ -1,0 +1,63 @@
+.stage-planner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.length-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.km-field {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.km-field input,
+.days-control input {
+  width: 4rem;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.unit {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.days-control {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.suggestion {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
