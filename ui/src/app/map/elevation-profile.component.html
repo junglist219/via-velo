@@ -1,0 +1,10 @@
+@if (trackPoints().length > 0) {
+  <div class="elevation-strip">
+    <canvas
+      baseChart
+      [type]="chartType"
+      [data]="chartData()"
+      [options]="chartOptions"
+    ></canvas>
+  </div>
+}

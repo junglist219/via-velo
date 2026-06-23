@@ -8,6 +8,9 @@
 /ui/.angular-cli.json
 /ui/.ng/
 
+# Claude
+/.claude/skills/
+
 # Environment files
 /.env
 

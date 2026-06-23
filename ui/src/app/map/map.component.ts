@@ -13,20 +13,8 @@ import type { ParsedRoute } from './models';
 
 @Component({
   selector: 'app-map',
-  template: '<div #mapContainer class="map-container"></div>',
-  styles: [
-    `
-      :host {
-        display: block;
-        width: 100%;
-        height: 100%;
-      }
-      .map-container {
-        width: 100%;
-        height: 100%;
-      }
-    `,
-  ],
+  templateUrl: './map.component.html',
+  styleUrl: './map.component.scss',
 })
 export class MapComponent implements OnChanges, OnDestroy {
   @Input() route: ParsedRoute | null = null;

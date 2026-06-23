@@ -20,6 +20,8 @@ This is an Angular project using standalone components and Signals for reactivit
 - Use strict TypeScript settings
 - Follow Angular style guide (angular.dev)
 - Use OnPush change detection strategy
+- Never use inline `template`/`styles` in `@Component`; always use external files via `templateUrl` and `styleUrl`
+- Put markup in a sibling `.html` file and styles in a sibling `.scss` file (e.g. `foo.component.ts` → `foo.component.html` + `foo.component.scss`)
 
 ## Conventions
 - Use `inject()` function instead of constructor injection

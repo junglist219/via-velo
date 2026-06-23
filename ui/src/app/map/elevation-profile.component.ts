@@ -7,28 +7,8 @@ import type { TrackPoint } from './models';
   selector: 'app-elevation-profile',
   standalone: true,
   imports: [BaseChartDirective],
-  template: `
-    @if (trackPoints().length > 0) {
-      <div class="elevation-strip">
-        <canvas
-          baseChart
-          [type]="chartType"
-          [data]="chartData()"
-          [options]="chartOptions"
-        ></canvas>
-      </div>
-    }
-  `,
-  styles: [`
-    .elevation-strip {
-      height: 150px;
-      width: 100%;
-      background: #fff;
-      border-top: 1px solid #e5e7eb;
-      padding: 0.25rem 0.5rem 0.25rem;
-      box-sizing: border-box;
-    }
-  `],
+  templateUrl: './elevation-profile.component.html',
+  styleUrl: './elevation-profile.component.scss',
 })
 export class ElevationProfileComponent {
   readonly trackPoints = input<TrackPoint[]>([]);

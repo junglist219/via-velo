@@ -4,47 +4,8 @@ import type { ParsedRoute } from './models';
 @Component({
   selector: 'app-route-info',
   standalone: true,
-  template: `
-    <div class="route-info">
-      <div class="metric">
-        <span class="label">Distanz</span>
-        <span class="value">{{ distanceText() }}</span>
-      </div>
-      <div class="metric">
-        <span class="label">Aufstieg</span>
-        <span class="value">{{ gainText() }}</span>
-      </div>
-      <div class="metric">
-        <span class="label">Abstieg</span>
-        <span class="value">{{ lossText() }}</span>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .route-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      padding: 1rem 1.25rem;
-    }
-
-    .metric {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-    }
-
-    .label {
-      font-size: 0.875rem;
-      color: #6b7280;
-    }
-
-    .value {
-      font-size: 0.9375rem;
-      font-weight: 600;
-      color: #111827;
-    }
-  `],
+  templateUrl: './route-info.component.html',
+  styleUrl: './route-info.component.scss',
 })
 export class RouteInfoComponent {
   readonly route = input<ParsedRoute | null>(null);
