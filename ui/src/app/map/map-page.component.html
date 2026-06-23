@@ -18,6 +18,14 @@
       [(selectedIndex)]="selectedStageIndex"
     ></app-stage-list>
   </div>
+  @if (stages().length >= 2) {
+    <app-camping-list
+      [stops]="campStopViews()"
+      [selectedStageIndex]="selectedCampStopIndex()"
+      (search)="loadCampgroundsForStop($event)"
+      (stopFocused)="onCampStopFocused($event)"
+    ></app-camping-list>
+  }
 </aside>
 
 <div class="map-area">
@@ -25,6 +33,8 @@
     [route]="route()"
     [stages]="stages()"
     [selectedStageIndex]="selectedStageIndex()"
+    [campStops]="campStopsList()"
+    [selectedCampStopIndex]="selectedCampStopIndex()"
     (stageSelected)="selectedStageIndex.set($event)"
   ></app-map>
   <app-elevation-profile [trackPoints]="route()?.trackPoints ?? []"></app-elevation-profile>

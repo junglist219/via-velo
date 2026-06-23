@@ -10,7 +10,7 @@ import {
   afterNextRender,
 } from '@angular/core';
 import * as L from 'leaflet';
-import type { ParsedRoute, Stage } from './models';
+import type { Campground, CampStop, ParsedRoute, Stage } from './models';
 import { stageColor } from './stage-colors';
 
 const DIMMED_OPACITY = 0.3;
@@ -24,6 +24,8 @@ export class MapComponent implements OnDestroy {
   readonly route = input<ParsedRoute | null>(null);
   readonly stages = input<Stage[]>([]);
   readonly selectedStageIndex = input<number | null>(null);
+  readonly campStops = input<CampStop[]>([]);
+  readonly selectedCampStopIndex = input<number | null>(null);
   readonly stageSelected = output<number>();
 
   private readonly mapContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
@@ -37,19 +39,23 @@ export class MapComponent implements OnDestroy {
       this.updateZoom();
     });
 
-    // Redraw layers whenever the route, the stage plan, or the selection change.
+    // Redraw layers whenever the route, the stage plan, the selection, or the
+    // campground results change.
     effect(() => {
       this.route();
       this.stages();
       this.selectedStageIndex();
+      this.campStops();
+      this.selectedCampStopIndex();
       if (this.map) this.render();
     });
 
-    // Zoom depends only on the route and the selection — NOT on the stage plan,
+    // Zoom depends only on the route and the selections — NOT on the stage plan,
     // so reflowing the split (which keeps the selection cleared) never re-zooms.
     effect(() => {
       this.route();
       this.selectedStageIndex();
+      this.selectedCampStopIndex();
       if (this.map) this.updateZoom();
     });
   }
@@ -116,6 +122,67 @@ export class MapComponent implements OnDestroy {
       weight: 2,
       fillOpacity: 1,
     }).addTo(this.routeLayer);
+
+    const focusedCampStop = this.selectedCampStopIndex();
+    for (const stop of this.campStops()) {
+      const dim = focusedCampStop !== null && stop.stageIndex !== focusedCampStop;
+      this.addCampStop(stop, dim);
+    }
+  }
+
+  private addCampStop(stop: CampStop, dim: boolean): void {
+    if (!this.routeLayer) return;
+    const color = stageColor(stop.stageIndex);
+
+    L.circle([stop.lat, stop.lng], {
+      radius: stop.radiusKm * 1000,
+      color,
+      weight: 1,
+      fillColor: color,
+      fillOpacity: dim ? 0.08 * DIMMED_OPACITY : 0.08,
+      opacity: dim ? 0.4 * DIMMED_OPACITY : 0.4,
+    }).addTo(this.routeLayer);
+
+    for (const camp of stop.campgrounds) {
+      const icon = L.divIcon({
+        className: 'campground-marker',
+        html: `<span class="campground-marker__badge" style="background:${color};opacity:${
+          dim ? DIMMED_OPACITY : 1
+        }">⛺</span>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+      });
+      L.marker([camp.lat, camp.lng], { icon })
+        .bindPopup(this.buildCampgroundPopup(camp), { maxWidth: 260 })
+        .addTo(this.routeLayer);
+    }
+  }
+
+  private buildCampgroundPopup(camp: Campground): string {
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${camp.lat},${camp.lng}`;
+    const parts = [`<strong>${this.escapeHtml(camp.name)}</strong>`];
+    if (camp.address) {
+      parts.push(`<span class="campground-popup__address">${this.escapeHtml(camp.address)}</span>`);
+    }
+    if (camp.website) {
+      const href = this.escapeHtml(camp.website);
+      parts.push(
+        `<a class="campground-popup__link" href="${href}" target="_blank" rel="noopener">Webseite</a>`,
+      );
+    }
+    parts.push(
+      `<a class="campground-popup__link" href="${mapsUrl}" target="_blank" rel="noopener">Google Maps</a>`,
+    );
+    return `<div class="campground-popup">${parts.join('')}</div>`;
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   private updateZoom(): void {
@@ -126,10 +193,21 @@ export class MapComponent implements OnDestroy {
 
     const points = route.trackPoints;
     const selected = this.selectedStageIndex();
+    const focusedCampStop = this.selectedCampStopIndex();
     // Read the stage plan without tracking it, so reflows do not trigger a zoom.
     const stage = selected !== null ? untracked(() => this.stages())[selected] : undefined;
+    // Read the camp stops without tracking them, so a fresh result does not re-zoom.
+    const campStop =
+      focusedCampStop !== null
+        ? untracked(() => this.campStops()).find((s) => s.stageIndex === focusedCampStop)
+        : undefined;
 
-    if (stage) {
+    if (campStop) {
+      const bounds = L.circle([campStop.lat, campStop.lng], {
+        radius: campStop.radiusKm * 1000,
+      }).getBounds();
+      this.map.fitBounds(bounds, { padding: [32, 32] });
+    } else if (stage) {
       const segment = points
         .slice(stage.startPointIndex, stage.endPointIndex + 1)
         .map((pt) => L.latLng(pt.lat, pt.lng));
