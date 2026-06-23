@@ -15,6 +15,19 @@ const RADIUS_STEPS_KM = [10, 20, 30];
 // warnings.
 const EXPANDED_THRESHOLD_KM = 20;
 
+const EARTH_RADIUS_KM = 6371;
+
+// Great-circle distance between two coordinates, in kilometres.
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 interface OverpassTags {
   name?: string;
   website?: string;
@@ -64,7 +77,9 @@ export class CampgroundService {
         headers: { 'Content-Type': 'text/plain' },
       }),
     );
-    return (response.elements ?? []).map((el) => this.toCampground(el));
+    return (response.elements ?? [])
+      .map((el) => this.toCampground(el, lat, lng))
+      .sort((a, b) => a.distanceKm - b.distanceKm); // nearest to the stage destination first
   }
 
   private buildQuery(lat: number, lng: number, radiusKm: number): string {
@@ -79,7 +94,7 @@ export class CampgroundService {
 out center tags;`;
   }
 
-  private toCampground(el: OverpassElement): Campground {
+  private toCampground(el: OverpassElement, originLat: number, originLng: number): Campground {
     const lat = el.lat ?? el.center?.lat ?? 0;
     const lng = el.lon ?? el.center?.lon ?? 0;
     const tags = el.tags ?? {};
@@ -90,6 +105,7 @@ out center tags;`;
       name: tags.name ?? 'Campingplatz',
       address: this.assembleAddress(tags),
       website: tags.website ?? tags['contact:website'] ?? null,
+      distanceKm: haversineKm(originLat, originLng, lat, lng),
     };
   }
 

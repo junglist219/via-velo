@@ -29,6 +29,7 @@ export interface Campground {
   name: string; // fallback "Campingplatz" when no name tag
   address: string | null;
   website: string | null;
+  distanceKm: number; // straight-line distance to the stage destination (Etappenziel)
 }
 
 export interface CampStop {

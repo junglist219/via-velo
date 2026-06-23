@@ -23,6 +23,7 @@
         @for (camp of result.campgrounds; track camp.id) {
           <li class="camp-entry">
             <span class="camp-entry__name">{{ camp.name }}</span>
+            <span class="camp-entry__distance">{{ camp.distanceKm.toFixed(1) }} km vom Etappenziel</span>
             @if (camp.address) {
               <span class="camp-entry__address">{{ camp.address }}</span>
             }
